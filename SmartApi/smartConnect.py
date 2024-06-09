@@ -7,8 +7,6 @@ from requests import get
 import re, uuid
 import socket
 import os
-import logzero
-from logzero import logger
 import time
 import ssl
 from SmartApi.version import __version__, __title__
@@ -118,7 +116,7 @@ class SmartConnect(object):
             else:
                 reqadapter = requests.adapters.HTTPAdapter()
                 self.reqsession.mount("https://", reqadapter)
-            logger.info(f"in pool")
+            log.info(f"in pool")
         else:
             # If SSL is disabled, use the default SSL context
             self.reqsession = requests
@@ -128,13 +126,13 @@ class SmartConnect(object):
         log_folder_path = os.path.join("logs", log_folder)  # Construct the full path to the log folder
         os.makedirs(log_folder_path, exist_ok=True) # Create the log folder if it doesn't exist
         log_path = os.path.join(log_folder_path, "app.log") # Construct the full path to the log file
-        logzero.logfile(log_path, loglevel=logging.ERROR)  # Output logs to a date-wise log file
+        log.add(log_path, loglevel=logging.ERROR)  # Output logs to a date-wise log file
 
         if pool:
             self.reqsession = requests.Session()
             reqadapter = requests.adapters.HTTPAdapter(**pool)
             self.reqsession.mount("https://", reqadapter)
-            logger.info(f"in pool")
+            log.info(f"in pool")
         else:
             self.reqsession = requests
 
@@ -215,7 +213,7 @@ class SmartConnect(object):
                                         proxies=self.proxies)
            
         except Exception as e:
-            logger.error(f"Error occurred while making a {method} request to {url}. Headers: {headers}, Request: {params}, Response: {e}")
+            log.error(f"Error occurred while making a {method} request to {url}. Headers: {headers}, Request: {params}, Response: {e}")
             raise e
 
         if self.debug:
@@ -240,7 +238,7 @@ class SmartConnect(object):
                 exp = getattr(ex, data["error_type"], ex.GeneralException)
                 raise exp(data["message"], code=r.status_code)
             if data.get("status",False) is False : 
-                logger.error(f"Error occurred while making a {method} request to {url}. Error: {data['message']}. URL: {url}, Headers: {self.requestHeaders()}, Request: {params}, Response: {data}")
+                log.error(f"Error occurred while making a {method} request to {url}. Error: {data['message']}. URL: {url}, Headers: {self.requestHeaders()}, Request: {params}, Response: {data}")
             return data
         elif "csv" in headers["Content-type"]:
             return r.content
@@ -331,9 +329,9 @@ class SmartConnect(object):
                 orderResponse = response['data']['orderid']
                 return orderResponse
             else:
-                logger.error(f"Invalid response format: {response}")
+                log.error(f"Invalid response format: {response}")
         else:
-            logger.error(f"API request failed: {response}")
+            log.error(f"API request failed: {response}")
         return None
 
     def placeOrderFullResponse(self,orderparams):
@@ -347,9 +345,9 @@ class SmartConnect(object):
                 orderResponse = response
                 return orderResponse
             else:
-                logger.error(f"Invalid response format: {response}")
+                log.error(f"Invalid response format: {response}")
         else:
-            logger.error(f"API request failed: {response}")
+            log.error(f"API request failed: {response}")
         return None
     
     def modifyOrder(self,orderparams):
@@ -482,10 +480,10 @@ class SmartConnect(object):
             for index, item in enumerate(searchScripResult["data"], start=1):
                 symbol_info = f"{index}. exchange: {item['exchange']}, tradingsymbol: {item['tradingsymbol']}, symboltoken: {item['symboltoken']}"
                 symbols += "\n" + symbol_info
-            logger.info(message + symbols)
+            log.info(message + symbols)
             return searchScripResult
         elif searchScripResult["status"] is True and not searchScripResult["data"]:
-            logger.info("Search successful. No matching trading symbols found for the given query.")
+            log.info("Search successful. No matching trading symbols found for the given query.")
             return searchScripResult
         else:
             return searchScripResult
@@ -499,7 +497,7 @@ class SmartConnect(object):
             data = json.loads(response.text)
             return data
         else:
-            logger.error(f"Error in make_authenticated_get_request: {response.status_code}")
+            log.error(f"Error in make_authenticated_get_request: {response.status_code}")
             return None
             
     def individual_order_details(self, qParam):
@@ -508,7 +506,7 @@ class SmartConnect(object):
             response_data = self.make_authenticated_get_request(url, self.access_token)
             return response_data
         except Exception as e:
-            logger.error(f"Error occurred in ind_order_details: {e}")
+            log.error(f"Error occurred in ind_order_details: {e}")
             return None
     
     def getMarginApi(self,params):
